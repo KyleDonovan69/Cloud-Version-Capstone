@@ -61,6 +61,15 @@ private:
     int m_packetsPerSec;
     bool m_gameStarted;
 
+    std::unordered_map<std::uint32_t, int> m_playerKills;
+    std::unordered_map<std::uint32_t, int> m_playerDeaths;
+    std::unordered_map<std::uint32_t, float> m_playerPrevHealth;
+    std::unordered_map<std::uint32_t, std::string> m_playerSessionNames;
+    std::unordered_map<std::uint32_t, std::uint32_t> m_lastEnemyAttacker;
+    std::unordered_map<std::uint32_t, bool> m_prevEnemyAlive;
+    sf::Clock m_sessionClock;
+    bool m_statsPushed;
+
     void log(const std::string& message);
     void updateDashboard();
 
@@ -90,4 +99,7 @@ private:
 
     void sendToPlayer(const ConnectedPlayer& player, sf::Packet& packet);
     void broadcastToAll(sf::Packet& packet, std::uint32_t excludePlayerId = 0);
+
+    void pushSessionStats();
+    void creditKillsFromEnemySync();
 };

@@ -3,6 +3,7 @@
 #include <optional>
 #include <random>
 #include <cmath>
+#include <cstdlib>
 
 GameServer::GameServer(std::uint16_t port)
     : m_port(port)
@@ -16,6 +17,7 @@ GameServer::GameServer(std::uint16_t port)
     , m_packetCount(0)
     , m_packetsPerSec(0)
     , m_gameStarted(false)
+    , m_statsPushed(false)
 {
 }
 
@@ -178,6 +180,7 @@ void GameServer::handleConnectRequest(Network::PacketReader& reader, sf::IpAddre
     player.port = senderPort;
     player.state.playerId = playerId;
     player.state.name = playerName;
+    m_playerSessionNames[playerId] = playerName;
 
     // Spread players out in a circle around center spawn
     const float centerX = MAP_WIDTH / 2.0f;
@@ -281,11 +284,21 @@ void GameServer::handleDisconnect(Network::PacketReader& reader)
             // If no other players, reset everything
             if (m_hostPlayerId == 0)
             {
+                pushSessionStats();
+
                 log("No players left, resetting server state");
                 m_gameStarted = false;
-                m_worldSeed = 0; // Reset seed for next session
+                m_worldSeed = 0;
                 m_enemyStates.clear();
                 m_npcStates.clear();
+
+                m_playerKills.clear();
+                m_playerDeaths.clear();
+                m_playerPrevHealth.clear();
+                m_playerSessionNames.clear();
+                m_lastEnemyAttacker.clear();
+                m_prevEnemyAlive.clear();
+                m_statsPushed = false;
             }
         }
 
@@ -308,7 +321,13 @@ void GameServer::handlePlayerUpdate(Network::PacketReader& reader)
         ConnectedPlayer& player = it->second;
         reader.readFloat(player.state.x);
         reader.readFloat(player.state.y);
+        float prevHealth = player.state.health;
         reader.readFloat(player.state.health);
+        if (prevHealth > 0.0f && player.state.health <= 0.0f)
+        {
+            m_playerDeaths[playerId]++;
+            log("Player " + player.state.name + " died (ID: " + std::to_string(playerId) + ")");
+        }
         reader.readUInt8(player.state.weaponType);
         reader.readBool(player.state.isAttacking);
         reader.readFloat(player.state.weaponRotation);
@@ -400,6 +419,8 @@ void GameServer::handleRequestStartGame(Network::PacketReader& reader)
     {
         log("Host (Player " + std::to_string(playerId) + ") requested game start");
         m_gameStarted = true;
+        m_sessionClock.restart();
+        m_statsPushed = false;
         broadcastWorldSettings(); // Send settings first
         broadcastStartGame(); // Then send start signal
     }
@@ -491,6 +512,84 @@ void GameServer::broadcastToAll(sf::Packet& packet, std::uint32_t excludePlayerI
     }
 }
 
+void GameServer::pushSessionStats()
+{
+    if (m_statsPushed || !m_gameStarted || m_playerSessionNames.empty())
+        return;
+
+    m_statsPushed = true;
+
+    const float duration = m_sessionClock.getElapsedTime().asSeconds();
+
+    std::string json;
+    json.reserve(512);
+    json += "{";
+    json += "\"worldSeed\":" + std::to_string(m_worldSeed) + ",";
+    json += "\"worldSize\":" + std::to_string(static_cast<int>(m_worldSettings.worldSize)) + ",";
+    json += "\"sessionDuration\":" + std::to_string(static_cast<int>(duration)) + ",";
+    json += "\"players\":[";
+
+    bool first = true;
+    for (const auto& [id, name] : m_playerSessionNames)
+    {
+        if (!first) json += ",";
+        first = false;
+
+        std::string safeName;
+        safeName.reserve(name.size());
+        for (const char c : name)
+        {
+            if (c == '"')  safeName += "\\\"";
+            else if (c == '\\') safeName += "\\\\";
+            else                safeName += c;
+        }
+
+        const int kills = m_playerKills.count(id) ? m_playerKills.at(id) : 0;
+        const int deaths = m_playerDeaths.count(id) ? m_playerDeaths.at(id) : 0;
+
+        json += "{\"playerId\":" + std::to_string(id)
+            + ",\"name\":\"" + safeName + "\""
+            + ",\"kills\":" + std::to_string(kills)
+            + ",\"deaths\":" + std::to_string(deaths)
+            + "}";
+    }
+    json += "]}";
+
+    std::string curlCmd = "curl -s -X POST http://127.0.0.1:8081/stats "
+        "-H \"Content-Type: application/json\" "
+        "-d \"" + json + "\" > /dev/null 2>&1 &";
+
+    int ret = std::system(curlCmd.c_str());
+    if (ret == 0)
+        log("Session stats delivered (" + std::to_string(m_playerSessionNames.size()) + " players)");
+    else
+        log("Stat push failed (curl returned " + std::to_string(ret) + ")");
+}
+
+void GameServer::creditKillsFromEnemySync()
+{
+    for (const auto& enemy : m_enemyStates)
+    {
+        bool wasAlive = true;
+        auto prevIt = m_prevEnemyAlive.find(enemy.enemyId);
+        if (prevIt != m_prevEnemyAlive.end())
+            wasAlive = prevIt->second;
+
+        if (wasAlive && !enemy.isAlive)
+        {
+            auto attackerIt = m_lastEnemyAttacker.find(enemy.enemyId);
+            if (attackerIt != m_lastEnemyAttacker.end())
+            {
+                m_playerKills[attackerIt->second]++;
+                log("Kill attributed to player " + std::to_string(attackerIt->second)
+                    + " (enemy " + std::to_string(enemy.enemyId) + ")");
+            }
+        }
+
+        m_prevEnemyAlive[enemy.enemyId] = enemy.isAlive;
+    }
+}
+
 void GameServer::broadcastPlayerReady(std::uint32_t playerId, bool isReady)
 {
     Network::PacketWriter writer(Network::PacketType::PLAYER_READY_STATUS);
@@ -558,6 +657,7 @@ void GameServer::handleSyncEnemies(Network::PacketReader& reader)
     }
 
     // broadcast to all clients
+    creditKillsFromEnemySync();
     broadcastEnemies();
 }
 
@@ -694,6 +794,7 @@ void GameServer::handleDamageEnemy(Network::PacketReader& reader, sf::IpAddress 
         return;
 
     // Don't relay if attacker is already the host
+    m_lastEnemyAttacker[enemyId] = attackerId;
     if (attackerId == m_hostPlayerId) return;
 
     auto hostIt = m_players.find(m_hostPlayerId);
