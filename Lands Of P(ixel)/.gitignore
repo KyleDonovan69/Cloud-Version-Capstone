@@ -1,0 +1,45 @@
+# Visual Studio
+*.vs
+*.suo
+*.user
+*.userosscache
+
+*.pem
+*.ppk
+
+# Build results
+[Ll]ands Of P(ixel)/Debug/
+Debug/
+[Ll]ands Of P(ixel)/Release/
+Release/
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.log
+*.idb
+*.tlog/
+*.lastbuildstate
+*.recipe
+*.applocal.log
+*.vcxproj.filters
+
+# vcpkg logs
+vcpkg.applocal.log
+
+# Other
+*.DS_Store
+Thumbs.db
+
+# Asset folders (keep these, do not ignore)
+!Lands Of P(ixel)/ASSETS/
+!Lands Of P(ixel)/ASSETS/AUDIO/
+!Lands Of P(ixel)/ASSETS/FONTS/
+!Lands Of P(ixel)/ASSETS/IMAGES/
+
+# Do not ignore source files
+!Lands Of P(ixel)/*.cpp
+!Lands Of P(ixel)/*.h
+
+# Ignore notebook checkpoints
+.ipynb_checkpoints/

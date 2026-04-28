@@ -1,0 +1,16 @@
+build/run
+docker build -t lands-of-pixel-server -f "Lands Of P(ixel)\Lands Of P(ixel)\Dockerfile" "Lands Of P(ixel)\Lands Of P(ixel)"
+docker run -p 53001:53001/udp lands-of-pixel-server
+
+run already
+docker run -p 53001:53001/udp lands-of-pixel-server
+
+run in background
+docker run -d -p 53001:53001/udp --name game-server lands-of-pixel-server
+
+stop server
+docker stop game-server
+docker rm game-server
+
+logs for server
+docker logs -f game-server

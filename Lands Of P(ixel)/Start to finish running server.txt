@@ -1,0 +1,40 @@
+Start to finish running server
+
+ssh -i "C:\Users\gameuser\Desktop\PROJECT\Lands_Of_Pixel_KeyPair.pem" ubuntu@16.171.1.115
+
+cd ~/gameserver/Year-4-Project-Workings
+git pull origin main
+
+cd "Lands Of P(ixel)/Lands Of P(ixel)/"
+
+g++ -std=c++20 -o GameServer \
+    -Iinclude \
+    -I/usr/local/include \
+    src/ServerMain.cpp \
+    src/Network/GameServer.cpp \
+    src/Network/NetworkClient.cpp \
+    src/Network/NetworkProtocol.cpp \
+    -DSFML_STATIC \
+    /usr/local/lib/libsfml-network-s.a \
+    /usr/local/lib/libsfml-system-s.a \
+    -lpthread
+
+# Stop the old server
+pkill GameServer
+
+# Start new server in background
+nohup ./GameServer 53001 > server.log 2>&1 &
+
+# Verify it's running
+ps aux | grep GameServer
+
+# View live logs
+tail -f server.log
+
+# View last 20 lines
+tail -20 server.log
+
+echo "=== Server Status ===" && \
+ps aux | grep GameServer | grep -v grep && \
+echo "=== Last 10 Log Lines ===" && \
+tail -10 server.log

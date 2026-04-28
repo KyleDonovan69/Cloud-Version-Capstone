@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\Adventurer.ttf" />
+    <Font Include="ASSETS\FONTS\Jersey20-Regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="ASSETS\AUDIO\beep.wav" />
+    <Media Include="ASSETS\AUDIO\MUSIC\xDeviruchi - Title Theme .wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Constants.h" />
+    <ClInclude Include="include\CraftingSystem.h" />
+    <ClInclude Include="include\Entities\EnemyManager.h" />
+    <ClInclude Include="include\Entities\Inventory.h" />
+    <ClInclude Include="include\Entities\NPC.h" />
+    <ClInclude Include="include\Entities\NPCAnimation.h" />
+    <ClInclude Include="include\Entities\NPCManager.h" />
+    <ClInclude Include="include\Entities\Player.h" />
+    <ClInclude Include="include\Entities\PlayerAnimation.h" />
+    <ClInclude Include="include\Entities\Projectile.h" />
+    <ClInclude Include="include\Entities\Weapon.h" />
+    <ClInclude Include="include\Game.h" />
+    <ClInclude Include="include\httplib.h" />
+    <ClInclude Include="include\HUD.h" />
+    <ClInclude Include="include\Map\Cave.h" />
+    <ClInclude Include="include\Map\DayNightCycle.h" />
+    <ClInclude Include="include\Map\GameObject.h" />
+    <ClInclude Include="include\Map\Map.h" />
+    <ClInclude Include="include\Map\SpatialGrid.h" />
+    <ClInclude Include="include\MenuSystem.h" />
+    <ClInclude Include="include\Building\Building.h" />
+    <ClInclude Include="include\Building\BuildingManager.h" />
+    <ClInclude Include="include\Building\VillageGen.h" />
+    <ClInclude Include="include\Network\GameServer.h" />
+    <ClInclude Include="include\Network\NetworkClient.h" />
+    <ClInclude Include="include\Network\NetworkProtocol.h" />
+    <ClInclude Include="include\Server\Dashboard.h" />
+    <ClInclude Include="include\UI\SoundManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\CraftingSystem.cpp" />
+    <ClCompile Include="src\Entities\EnemyManager.cpp" />
+    <ClCompile Include="src\Entities\Inventory.cpp" />
+    <ClCompile Include="src\Entities\NPC.cpp" />
+    <ClCompile Include="src\Entities\NPCAnimation.cpp" />
+    <ClCompile Include="src\Entities\NPCManager.cpp" />
+    <ClCompile Include="src\Entities\Player.cpp" />
+    <ClCompile Include="src\Entities\PlayerAnimation.cpp" />
+    <ClCompile Include="src\Entities\Projectile.cpp" />
+    <ClCompile Include="src\Entities\Weapon.cpp" />
+    <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\HUD.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Map\Cave.cpp" />
+    <ClCompile Include="src\Map\DayNightCycle.cpp" />
+    <ClCompile Include="src\Map\GameObject.cpp" />
+    <ClCompile Include="src\Map\Map.cpp" />
+    <ClCompile Include="src\Map\SpatialGrid.cpp" />
+    <ClCompile Include="src\MenuSystem.cpp" />
+    <ClCompile Include="src\Building\Building.cpp" />
+    <ClCompile Include="src\Building\BuildingManager.cpp" />
+    <ClCompile Include="src\Building\VillageGen.cpp" />
+    <ClCompile Include="src\Network\GameServer.cpp" />
+    <ClCompile Include="src\Network\NetworkClient.cpp" />
+    <ClCompile Include="src\Network\NetworkProtocol.cpp" />
+    <ClCompile Include="src\ServerMain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\Server\Dashboard.cpp" />
+    <ClCompile Include="src\UI\SoundManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\bush.png" />
+    <Image Include="ASSETS\IMAGES\cactus.png" />
+    <Image Include="ASSETS\IMAGES\cave.png" />
+    <Image Include="ASSETS\IMAGES\Chilo-SpriteSheet.png" />
+    <Image Include="ASSETS\IMAGES\Female-Player-SpriteSheet.png" />
+    <Image Include="ASSETS\IMAGES\flowers.png" />
+    <Image Include="ASSETS\IMAGES\grass.png" />
+    <Image Include="ASSETS\IMAGES\grass_tuft.png" />
+    <Image Include="ASSETS\IMAGES\Kylo-SpriteSheet.png" />
+    <Image Include="ASSETS\IMAGES\ore.jpg" />
+    <Image Include="ASSETS\IMAGES\palm_tree.png" />
+    <Image Include="ASSETS\IMAGES\rock.png" />
+    <Image Include="ASSETS\IMAGES\sand.png" />
+    <Image Include="ASSETS\IMAGES\snow.png" />
+    <Image Include="ASSETS\IMAGES\stone.png" />
+    <Image Include="ASSETS\IMAGES\stone2.png" />
+    <Image Include="ASSETS\IMAGES\tree.png" />
+    <Image Include="ASSETS\IMAGES\water.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DOCUMENTATION\Template-Project-Game-Design-Document.doc" />
+    <None Include="DOCUMENTATION\Template-Project-Report.docx" />
+    <None Include="DOCUMENTATION\Template-Project-Software-Requirements-Specification-Document.doc" />
+    <None Include="DOCUMENTATION\Template-Project-Technical-Design-Document.doc" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{baaddb72-8640-42df-ae7e-7be1c5193492}</ProjectGuid>
+    <RootNamespace>Lands_Of_P_ixel_</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include;$(SFML_SDK)/src;$(ProjectDir)include;$(ProjectDir)include/Map;$(ProjectDir)include/Entities;$(ProjectDir)include/Building;$(ProjectDir)src;$(ProjectDir)src/Map;$(ProjectDir)src/Entities;$(ProjectDir)src/Building</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include;$(SFML_SDK)/src;$(ProjectDir)include;$(ProjectDir)include/Map;$(ProjectDir)include/Entities;$(ProjectDir)include/Building;$(ProjectDir)src;$(ProjectDir)src/Map;$(ProjectDir)src/Entities;$(ProjectDir)src/Building</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
