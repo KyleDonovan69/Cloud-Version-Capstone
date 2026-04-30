@@ -10,34 +10,32 @@
 // Simple JSON helpers — avoids pulling in a full JSON library
 namespace
 {
-    // Extract a string value: "key":"value"
     std::string jsonString(const std::string& json, const std::string& key)
     {
-        const std::string search = "\"" + key + "\":\"";
+        const std::string search = "\"" + key + "\"";
         auto pos = json.find(search);
         if (pos == std::string::npos) return "";
         pos += search.size();
+        pos = json.find('"', pos);  // find opening quote of value
+        if (pos == std::string::npos) return "";
+        pos++;
         auto end = json.find('"', pos);
         if (end == std::string::npos) return "";
         return json.substr(pos, end - pos);
     }
 
-    // Extract an integer value: "key":123
     int jsonInt(const std::string& json, const std::string& key, int def = 0)
     {
-        const std::string search = "\"" + key + "\":";
+        const std::string search = "\"" + key + "\"";
         auto pos = json.find(search);
         if (pos == std::string::npos) return def;
         pos += search.size();
-        // skip whitespace
-        while (pos < json.size() && (json[pos] == ' ' || json[pos] == '\t'))
-            ++pos;
-        if (pos >= json.size()) return def;
+        pos = json.find_first_of("0123456789", pos);
+        if (pos == std::string::npos) return def;
         try { return std::stoi(json.substr(pos)); }
         catch (...) { return def; }
     }
 
-    // Run a shell command and capture stdout
     std::string runCommand(const std::string& cmd)
     {
         std::array<char, 512> buf{};
@@ -50,7 +48,6 @@ namespace
         if (!pipe) return "";
         while (fgets(buf.data(), static_cast<int>(buf.size()), pipe.get()) != nullptr)
             result += buf.data();
-        // Trim trailing newline/whitespace
         while (!result.empty() && (result.back() == '\n' || result.back() == '\r' || result.back() == ' '))
             result.pop_back();
         return result;
@@ -244,9 +241,11 @@ std::vector<ServerEntry> ServerRegistry::parseServerList(const std::string& json
     std::vector<ServerEntry> result;
 
     // Find the servers array
-    auto arrStart = json.find("\"servers\":[");
+    auto arrStart = json.find("\"servers\"");
     if (arrStart == std::string::npos) return result;
-    arrStart += 11;  // skip past "servers":[
+    arrStart = json.find('[', arrStart);
+    if (arrStart == std::string::npos) return result;
+    arrStart += 1;  // skip past [
 
     // Walk through each object
     auto pos = arrStart;
