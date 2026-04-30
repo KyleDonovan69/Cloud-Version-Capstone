@@ -438,6 +438,17 @@ void Game::update(sf::Time t_deltaTime)
 		m_menuSystem.resetFlags();
 	}
 
+	if (m_menuSystem.shouldJoinFromBrowser())
+	{
+		std::string serverAddr = m_menuSystem.getServerAddress();
+		std::uint16_t serverPort = m_menuSystem.getServerPort();
+		std::cout << "Joining from browser: " << serverAddr << ":" << serverPort << std::endl;
+		initializeMultiplayer(serverAddr, serverPort);
+		m_menuSystem.setIsHost(false);
+		m_menuSystem.setGameState(GameState::LOBBY);
+		m_menuSystem.resetFlags();
+	}
+
 	// Handle lobby actions
 	if (m_menuSystem.shouldStartGame())
 	{

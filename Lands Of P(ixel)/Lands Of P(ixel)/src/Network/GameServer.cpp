@@ -18,6 +18,7 @@ GameServer::GameServer(std::uint16_t port)
     , m_packetsPerSec(0)
     , m_gameStarted(false)
     , m_statsPushed(false)
+    , m_registryHeartbeatTimer(0.0f)
 {
 }
 
@@ -39,6 +40,7 @@ bool GameServer::start()
 
     log("Game server started on port " + std::to_string(m_port));
     m_dashboard.start();
+    m_registry.registerServer(m_port);
     return true;
 }
 
@@ -46,6 +48,7 @@ void GameServer::stop()
 {
     if (m_running)
     {
+        m_registry.deregisterServer();
         m_running = false;
         m_socket.unbind();
         m_players.clear();
@@ -75,6 +78,15 @@ void GameServer::update()
         m_packetCount = 0;
         m_packetRateTimer.restart();
         updateDashboard();
+    }
+
+    // Registry heartbeat every 30 seconds
+    m_registryHeartbeatTimer += m_syncInterval;
+    if (m_registryHeartbeatTimer >= ServerRegistry::HEARTBEAT_INTERVAL)
+    {
+        m_registryHeartbeatTimer = 0.0f;
+        std::string gameState = m_gameStarted ? "playing" : "lobby";
+        m_registry.updateHeartbeat(static_cast<int>(m_players.size()), gameState);
     }
 }
 
@@ -299,6 +311,7 @@ void GameServer::handleDisconnect(Network::PacketReader& reader)
                 m_lastEnemyAttacker.clear();
                 m_prevEnemyAlive.clear();
                 m_statsPushed = false;
+                m_registry.updateHeartbeat(0, "lobby");
             }
         }
 
@@ -421,6 +434,7 @@ void GameServer::handleRequestStartGame(Network::PacketReader& reader)
         m_gameStarted = true;
         m_sessionClock.restart();
         m_statsPushed = false;
+        m_registry.updateHeartbeat(static_cast<int>(m_players.size()), "playing");
         broadcastWorldSettings(); // Send settings first
         broadcastStartGame(); // Then send start signal
     }
@@ -816,7 +830,7 @@ void GameServer::handleDamageNPC(Network::PacketReader& reader, sf::IpAddress se
     if (attackerId == m_hostPlayerId) return;
 
     auto hostIt = m_players.find(m_hostPlayerId);
-    if (hostIt == m_players.end()) 
+    if (hostIt == m_players.end())
         return;
 
     Network::PacketWriter writer(Network::PacketType::DAMAGE_NPC);

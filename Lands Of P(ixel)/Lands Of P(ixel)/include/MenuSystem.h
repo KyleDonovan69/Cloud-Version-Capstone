@@ -8,11 +8,13 @@
 #include <algorithm>
 #include "Constants.h"
 #include "PlayerAnimation.h"
+#include "Server/ServerRegistry.h"
 
 enum class GameState
 {
     MAIN_MENU,
     MULTIPLAYER_MENU,
+    SERVER_BROWSER,
     LOBBY,
     WORLD_SETTINGS,
     LOADING,
@@ -46,7 +48,7 @@ struct WorldSettings
         case WorldSize::SMALL: return 250;
         case WorldSize::MEDIUM: return 500;
         case WorldSize::LARGE: return 1000;
-		case WorldSize::BOMBOCLAT: return 2500;
+        case WorldSize::BOMBOCLAT: return 2500;
         }
         return 150;
     }
@@ -57,11 +59,11 @@ struct WorldSettings
 
     std::string getSizeName() const {
         switch (size) {
-		case WorldSize::TINY: return "Tiny (50x50)";
+        case WorldSize::TINY: return "Tiny (50x50)";
         case WorldSize::SMALL: return "Small (250x250)";
         case WorldSize::MEDIUM: return "Medium (500x500)";
         case WorldSize::LARGE: return "Large (1000x1000)";
-		case WorldSize::BOMBOCLAT: return "BomboClat (2500x2500)";
+        case WorldSize::BOMBOCLAT: return "BomboClat (2500x2500)";
         }
         return "Medium";
     }
@@ -99,6 +101,7 @@ public:
     bool shouldQuitGame() const { return m_shouldQuitGame; }
     bool shouldHostGame() const { return m_shouldHostGame; }
     bool shouldJoinGame() const { return m_shouldJoinGame; }
+    bool shouldJoinFromBrowser() const { return m_shouldJoinFromBrowser; }
     bool shouldStartGame() const { return m_shouldStartGame; }
     bool shouldToggleReady() const { return m_shouldToggleReady; }
     std::string getServerAddress() const { return m_serverAddress; }
@@ -195,6 +198,19 @@ private:
     std::uint16_t m_serverPort;
     bool m_shouldHostGame;
     bool m_shouldJoinGame;
+    bool m_shouldJoinFromBrowser;
+
+    // Server browser
+    sf::Text m_serverBrowserTitleText{ m_font };
+    sf::Text m_serverBrowserStatusText{ m_font };
+    sf::RectangleShape m_serverBrowserRefreshBtn;
+    sf::RectangleShape m_serverBrowserRefreshGlow;
+    sf::Text m_serverBrowserRefreshText{ m_font };
+    sf::RectangleShape m_serverBrowserBackBtn;
+    sf::RectangleShape m_serverBrowserBackGlow;
+    sf::Text m_serverBrowserBackText{ m_font };
+    int m_hoveredCard;
+    ServerRegistry m_serverRegistry;
 
     // Lobby
     std::vector<sf::RectangleShape> m_lobbyButtons;
@@ -269,6 +285,7 @@ private:
     void setupPauseMenu();
     void setupGameOverScreen();
     void setupMultiplayerMenu();
+    void setupServerBrowser();
     void setupLobby();
     void setupWorldSettings();
     void setupSettings();
@@ -279,6 +296,7 @@ private:
     void drawPauseMenu(sf::RenderWindow& window);
     void drawGameOverScreen(sf::RenderWindow& window);
     void drawMultiplayerMenu(sf::RenderWindow& window);
+    void drawServerBrowser(sf::RenderWindow& window);
     void drawLobby(sf::RenderWindow& window);
     void drawWorldSettings(sf::RenderWindow& window);
     void drawSettings(sf::RenderWindow& window);

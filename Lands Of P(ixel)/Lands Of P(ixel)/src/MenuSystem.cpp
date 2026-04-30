@@ -19,6 +19,8 @@ MenuSystem::MenuSystem()
     , m_shouldQuitGame(false)
     , m_shouldHostGame(false)
     , m_shouldJoinGame(false)
+    , m_shouldJoinFromBrowser(false)
+    , m_hoveredCard(-1)
     , m_shouldStartGame(false)
     , m_shouldToggleReady(false)
     , m_hoverGlowIntensity(0.0f)
@@ -58,6 +60,7 @@ MenuSystem::MenuSystem()
     setupPauseMenu();
     setupGameOverScreen();
     setupMultiplayerMenu();
+    setupServerBrowser();
     setupLobby();
     setupWorldSettings();
     setupSettings();
@@ -190,7 +193,7 @@ void MenuSystem::setupMultiplayerMenu()
     m_serverAddressText.setCharacterSize(32);
     m_serverAddressText.setFillColor(sf::Color::White);
 
-    std::vector<std::string> multiplayerLabels = { "Host Game", "Join Game", "Back" };
+    std::vector<std::string> multiplayerLabels = { "Host Game", "Browse Servers", "Join Game", "Back" };
     for (size_t i = 0; i < multiplayerLabels.size(); i++)
     {
         float yPos = 500.0f + i * BUTTON_SPACING;
@@ -412,6 +415,9 @@ void MenuSystem::draw(sf::RenderWindow& window)
         break;
     case GameState::MULTIPLAYER_MENU:
         drawMultiplayerMenu(window);
+        break;
+    case GameState::SERVER_BROWSER:
+        drawServerBrowser(window);
         break;
     case GameState::LOBBY:
         drawLobby(window);
@@ -1143,12 +1149,17 @@ void MenuSystem::handleClick(sf::Vector2f mousePos)
                     m_shouldHostGame = true;
                     std::cout << "Starting dedicated server..." << std::endl;
                 }
-                else if (i == 1) // Join Game
+                else if (i == 1) // Browse Servers
+                {
+                    setGameState(GameState::SERVER_BROWSER);
+                    m_serverRegistry.startRefreshing();
+                }
+                else if (i == 2) // Join Game (manual IP)
                 {
                     m_shouldJoinGame = true;
                     std::cout << "Connecting to server at " << m_serverAddress << ":" << m_serverPort << std::endl;
                 }
-                else if (i == 2) // Back
+                else if (i == 3) // Back
                 {
                     setGameState(GameState::MAIN_MENU);
                 }
@@ -1156,6 +1167,56 @@ void MenuSystem::handleClick(sf::Vector2f mousePos)
             }
         }
         break;
+
+    case GameState::SERVER_BROWSER:
+    {
+        auto servers = m_serverRegistry.getServers();
+        float ww = static_cast<float>(m_currentWindowSize.x);
+        float wh = static_cast<float>(m_currentWindowSize.y);
+
+        const float cardW = ww * 0.65f;
+        const float cardH = 90.0f;
+        const float cardX = (ww - cardW) / 2.0f;
+        const float cardStartY = wh * 0.23f;
+        const float cardSpacing = cardH + 14.0f;
+        const int   maxVisible = 5;
+
+        for (int i = 0; i < static_cast<int>(servers.size()) && i < maxVisible; i++)
+        {
+            float cardY = cardStartY + i * cardSpacing;
+            sf::FloatRect cardRect(sf::Vector2f(cardX, cardY), sf::Vector2f(cardW, cardH));
+            if (cardRect.contains(mousePos) && servers[i].isJoinable())
+            {
+                m_serverAddress = servers[i].ip;
+                m_serverPort = servers[i].port;
+                m_shouldJoinFromBrowser = true;
+                m_serverRegistry.stopRefreshing();
+                return;
+            }
+        }
+
+        float btnY = cardStartY + maxVisible * cardSpacing + 20.0f;
+        float refreshX = (ww / 2.0f) - 180.0f;
+        float backX = (ww / 2.0f) + 20.0f;
+
+        sf::FloatRect refreshRect(sf::Vector2f(refreshX, btnY), sf::Vector2f(160.0f, 55.0f));
+        if (refreshRect.contains(mousePos))
+        {
+            m_serverRegistry.stopRefreshing();
+            m_serverRegistry.startRefreshing();
+            return;
+        }
+
+        sf::FloatRect backRect(sf::Vector2f(backX, btnY), sf::Vector2f(160.0f, 55.0f));
+        if (backRect.contains(mousePos))
+        {
+            m_serverRegistry.stopRefreshing();
+            setGameState(GameState::MULTIPLAYER_MENU);
+            return;
+        }
+        break;
+    }
+
     case GameState::WORLD_SETTINGS:
         for (size_t i = 0; i < m_worldSettingsButtons.size(); i++)
         {
@@ -1361,7 +1422,7 @@ void MenuSystem::handleClick(sf::Vector2f mousePos)
     }
     case GameState::SETTINGS:
     {
-        float windowWidth  = static_cast<float>(m_currentWindowSize.x);
+        float windowWidth = static_cast<float>(m_currentWindowSize.x);
         float windowHeight = static_cast<float>(m_currentWindowSize.y);
         float panelWidth = 600.0f;
         float panelX = (windowWidth - panelWidth) / 2.0f;
@@ -1415,6 +1476,32 @@ void MenuSystem::handleMouseMove(sf::Vector2f mousePos)
     case GameState::MULTIPLAYER_MENU:
         checkButtonHover(m_multiplayerButtons, mousePos, m_hoveredButton);
         break;
+    case GameState::SERVER_BROWSER:
+    {
+        auto servers = m_serverRegistry.getServers();
+        float ww = static_cast<float>(m_currentWindowSize.x);
+        float wh = static_cast<float>(m_currentWindowSize.y);
+
+        const float cardW = ww * 0.65f;
+        const float cardH = 90.0f;
+        const float cardX = (ww - cardW) / 2.0f;
+        const float cardStartY = wh * 0.23f;
+        const float cardSpacing = cardH + 14.0f;
+        const int   maxVisible = 5;
+
+        m_hoveredCard = -1;
+        for (int i = 0; i < static_cast<int>(servers.size()) && i < maxVisible; i++)
+        {
+            float cardY = cardStartY + i * cardSpacing;
+            sf::FloatRect cardRect(sf::Vector2f(cardX, cardY), sf::Vector2f(cardW, cardH));
+            if (cardRect.contains(mousePos) && servers[i].isJoinable())
+            {
+                m_hoveredCard = i;
+                break;
+            }
+        }
+        break;
+    }
     case GameState::WORLD_SETTINGS:
         checkButtonHover(m_worldSettingsButtons, mousePos, m_hoveredButton);
 
@@ -1467,7 +1554,7 @@ void MenuSystem::handleMouseMove(sf::Vector2f mousePos)
         checkButtonHover(m_settingsButtons, mousePos, m_hoveredButton);
         if (m_isDraggingSlider)
         {
-            float windowWidth  = static_cast<float>(m_currentWindowSize.x);
+            float windowWidth = static_cast<float>(m_currentWindowSize.x);
             float windowHeight = static_cast<float>(m_currentWindowSize.y);
             float panelWidth = 600.0f;
             float panelX = (windowWidth - panelWidth) / 2.0f;
@@ -1564,6 +1651,7 @@ void MenuSystem::resetFlags()
     m_shouldJoinGame = false;
     m_shouldStartGame = false;
     m_shouldToggleReady = false;
+    m_shouldJoinFromBrowser = false;
 }
 
 void MenuSystem::setLobbyPlayers(const std::vector<LobbyPlayer>& players)
@@ -1828,4 +1916,160 @@ void MenuSystem::handleTextInput(std::uint32_t unicode)
         currentText += static_cast<char>(unicode);
         m_serverAddressText.setString(currentText);
     }
+}
+
+void MenuSystem::setupServerBrowser()
+{
+    m_serverBrowserTitleText.setFont(m_font);
+    m_serverBrowserTitleText.setString("Server Browser");
+    m_serverBrowserTitleText.setCharacterSize(70);
+    m_serverBrowserTitleText.setFillColor(FANTASY_GOLD);
+    m_serverBrowserTitleText.setOutlineColor(sf::Color(0, 0, 0, 200));
+    m_serverBrowserTitleText.setOutlineThickness(4.0f);
+
+    m_serverBrowserStatusText.setFont(m_font);
+    m_serverBrowserStatusText.setString("Searching for servers...");
+    m_serverBrowserStatusText.setCharacterSize(26);
+    m_serverBrowserStatusText.setFillColor(FANTASY_LIGHT_GOLD);
+    m_serverBrowserStatusText.setOutlineColor(sf::Color(0, 0, 0, 180));
+    m_serverBrowserStatusText.setOutlineThickness(2.0f);
+
+    m_serverBrowserRefreshBtn.setSize(sf::Vector2f(160.0f, 55.0f));
+    m_serverBrowserRefreshBtn.setFillColor(FANTASY_PURPLE);
+    m_serverBrowserRefreshBtn.setOutlineColor(FANTASY_GOLD);
+    m_serverBrowserRefreshBtn.setOutlineThickness(2.0f);
+    m_serverBrowserRefreshGlow.setSize(sf::Vector2f(170.0f, 65.0f));
+    m_serverBrowserRefreshGlow.setFillColor(sf::Color(75, 40, 110, 80));
+    m_serverBrowserRefreshText.setFont(m_font);
+    m_serverBrowserRefreshText.setString("Refresh");
+    m_serverBrowserRefreshText.setCharacterSize(24);
+    m_serverBrowserRefreshText.setFillColor(FANTASY_LIGHT_GOLD);
+
+    m_serverBrowserBackBtn.setSize(sf::Vector2f(160.0f, 55.0f));
+    m_serverBrowserBackBtn.setFillColor(FANTASY_CRIMSON);
+    m_serverBrowserBackBtn.setOutlineColor(FANTASY_GOLD);
+    m_serverBrowserBackBtn.setOutlineThickness(2.0f);
+    m_serverBrowserBackGlow.setSize(sf::Vector2f(170.0f, 65.0f));
+    m_serverBrowserBackGlow.setFillColor(sf::Color(139, 0, 0, 80));
+    m_serverBrowserBackText.setFont(m_font);
+    m_serverBrowserBackText.setString("Back");
+    m_serverBrowserBackText.setCharacterSize(24);
+    m_serverBrowserBackText.setFillColor(FANTASY_LIGHT_GOLD);
+}
+
+void MenuSystem::drawServerBrowser(sf::RenderWindow& window)
+{
+    sf::Vector2u windowSize = window.getSize();
+    float ww = static_cast<float>(windowSize.x);
+    float wh = static_cast<float>(windowSize.y);
+
+    m_background.setSize(sf::Vector2f(ww, wh));
+    window.draw(m_background);
+    for (size_t i = 0; i < m_backgroundStars.size(); i++)
+    {
+        m_backgroundStars[i].setPosition(sf::Vector2f(
+            m_starNormalizedPositions[i].x * ww,
+            m_starNormalizedPositions[i].y * wh));
+        window.draw(m_backgroundStars[i]);
+    }
+
+    sf::FloatRect tb = m_serverBrowserTitleText.getLocalBounds();
+    m_serverBrowserTitleText.setPosition(sf::Vector2f((ww - tb.size.x) / 2.0f, wh * 0.05f));
+    window.draw(m_serverBrowserTitleText);
+
+    auto servers = m_serverRegistry.getServers();
+
+    std::string statusStr;
+    if (m_serverRegistry.isFetching())
+        statusStr = "Refreshing...";
+    else if (!m_serverRegistry.isAvailable())
+        statusStr = "Could not reach server list";
+    else if (servers.empty())
+        statusStr = "No servers found - try hosting one!";
+    else
+        statusStr = std::to_string(servers.size()) + " server(s) found";
+
+    m_serverBrowserStatusText.setString(statusStr);
+    sf::FloatRect sb = m_serverBrowserStatusText.getLocalBounds();
+    m_serverBrowserStatusText.setPosition(sf::Vector2f((ww - sb.size.x) / 2.0f, wh * 0.16f));
+    window.draw(m_serverBrowserStatusText);
+
+    const float cardW = ww * 0.65f;
+    const float cardH = 90.0f;
+    const float cardX = (ww - cardW) / 2.0f;
+    const float cardStartY = wh * 0.23f;
+    const float cardSpacing = cardH + 14.0f;
+    const int   maxVisible = 5;
+
+    for (int i = 0; i < static_cast<int>(servers.size()) && i < maxVisible; i++)
+    {
+        const auto& srv = servers[i];
+        float cardY = cardStartY + i * cardSpacing;
+        bool hovered = (m_hoveredCard == i);
+        bool joinable = srv.isJoinable();
+
+        sf::RectangleShape card(sf::Vector2f(cardW, cardH));
+        card.setPosition(sf::Vector2f(cardX, cardY));
+        card.setFillColor(hovered && joinable
+            ? sf::Color(50, 40, 80, 230)
+            : sf::Color(20, 20, 40, 210));
+        card.setOutlineThickness(2.5f);
+        card.setOutlineColor(joinable
+            ? (hovered ? FANTASY_LIGHT_GOLD : FANTASY_GOLD)
+            : sf::Color(80, 80, 80, 200));
+        window.draw(card);
+
+        sf::Text ipText(m_font);
+        ipText.setString(srv.ip + ":" + std::to_string(srv.port));
+        ipText.setCharacterSize(28);
+        ipText.setFillColor(joinable ? FANTASY_LIGHT_GOLD : sf::Color(140, 140, 140));
+        ipText.setOutlineColor(sf::Color(0, 0, 0, 180));
+        ipText.setOutlineThickness(1.5f);
+        ipText.setPosition(sf::Vector2f(cardX + 20.0f, cardY + 8.0f));
+        window.draw(ipText);
+
+        sf::Text infoText(m_font);
+        infoText.setString(srv.getWorldSizeName() + " world  |  "
+            + std::to_string(srv.playerCount) + "/" + std::to_string(srv.maxPlayers) + " players");
+        infoText.setCharacterSize(22);
+        infoText.setFillColor(sf::Color(180, 180, 200));
+        infoText.setOutlineColor(sf::Color(0, 0, 0, 160));
+        infoText.setOutlineThickness(1.0f);
+        infoText.setPosition(sf::Vector2f(cardX + 20.0f, cardY + 48.0f));
+        window.draw(infoText);
+
+        sf::Text stateText(m_font);
+        stateText.setString(srv.gameState == "lobby" ? "OPEN" : "IN GAME");
+        stateText.setCharacterSize(22);
+        stateText.setFillColor(srv.gameState == "lobby"
+            ? sf::Color(100, 220, 100)
+            : sf::Color(220, 140, 60));
+        stateText.setOutlineColor(sf::Color(0, 0, 0, 180));
+        stateText.setOutlineThickness(1.5f);
+        sf::FloatRect stb = stateText.getLocalBounds();
+        stateText.setPosition(sf::Vector2f(cardX + cardW - stb.size.x - 20.0f, cardY + 28.0f));
+        window.draw(stateText);
+    }
+
+    float btnY = cardStartY + maxVisible * cardSpacing + 20.0f;
+    float refreshX = (ww / 2.0f) - 180.0f;
+    float backX = (ww / 2.0f) + 20.0f;
+
+    m_serverBrowserRefreshGlow.setPosition(sf::Vector2f(refreshX - 5.0f, btnY - 5.0f));
+    m_serverBrowserRefreshBtn.setPosition(sf::Vector2f(refreshX, btnY));
+    sf::FloatRect rtb = m_serverBrowserRefreshText.getLocalBounds();
+    m_serverBrowserRefreshText.setPosition(sf::Vector2f(
+        refreshX + (160.0f - rtb.size.x) / 2.0f, btnY + 12.0f));
+    window.draw(m_serverBrowserRefreshGlow);
+    window.draw(m_serverBrowserRefreshBtn);
+    window.draw(m_serverBrowserRefreshText);
+
+    m_serverBrowserBackGlow.setPosition(sf::Vector2f(backX - 5.0f, btnY - 5.0f));
+    m_serverBrowserBackBtn.setPosition(sf::Vector2f(backX, btnY));
+    sf::FloatRect bktb = m_serverBrowserBackText.getLocalBounds();
+    m_serverBrowserBackText.setPosition(sf::Vector2f(
+        backX + (160.0f - bktb.size.x) / 2.0f, btnY + 12.0f));
+    window.draw(m_serverBrowserBackGlow);
+    window.draw(m_serverBrowserBackBtn);
+    window.draw(m_serverBrowserBackText);
 }

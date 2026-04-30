@@ -7,6 +7,7 @@
 #include <vector>
 #include "Network/NetworkProtocol.h"
 #include "Server/Dashboard.h"
+#include "Server/ServerRegistry.h"
 #include "Constants.h"
 #include <chrono>
 #include <deque>
@@ -69,6 +70,9 @@ private:
     std::unordered_map<std::uint32_t, bool> m_prevEnemyAlive;
     sf::Clock m_sessionClock;
     bool m_statsPushed;
+
+    ServerRegistry m_registry;
+    float m_registryHeartbeatTimer;
 
     void log(const std::string& message);
     void updateDashboard();

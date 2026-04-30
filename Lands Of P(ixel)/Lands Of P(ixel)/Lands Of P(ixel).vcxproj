@@ -54,6 +54,7 @@
     <ClInclude Include="include\Network\NetworkClient.h" />
     <ClInclude Include="include\Network\NetworkProtocol.h" />
     <ClInclude Include="include\Server\Dashboard.h" />
+    <ClInclude Include="include\Server\ServerRegistry.h" />
     <ClInclude Include="include\UI\SoundManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -87,6 +88,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\Server\Dashboard.cpp" />
+    <ClCompile Include="src\Server\ServerRegistry.cpp" />
     <ClCompile Include="src\UI\SoundManager.cpp" />
   </ItemGroup>
   <ItemGroup>
