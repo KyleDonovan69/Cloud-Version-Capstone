@@ -36,14 +36,12 @@ struct ServerEntry
     }
 };
 
-// ServerRegistry
-// Runs all network calls on a background thread so the game loop
-// is never blocked. The game server uses register/heartbeat/deregister.
-// The game client uses fetchServers.
+// Runs all network calls on a background thread so the game loop is never blocked. 
+// The game server uses register/heartbeat/deregister and the game client uses fetchServers.
 class ServerRegistry
 {
 public:
-    // Base URL of the API Gateway — no trailing slash
+    // Base URL of the API Gateway
     static constexpr const char* API_BASE = "https://yvzm4l6ptj.execute-api.eu-north-1.amazonaws.com/prod";
 
     // How often the server sends a heartbeat (seconds)
@@ -57,46 +55,36 @@ public:
 
     //Server-side API
 
-    // Call once on server startup — discovers public IP automatically
+    // Call once on server startup, this discovers any public IP automatically
     void registerServer(std::uint16_t port, int maxPlayers = 8);
 
-    // Call when a player joins/leaves or game state changes
+    // Call this when a player joins/leaves or game state changes
     void updateHeartbeat(int playerCount, const std::string& gameState);
 
-    // Call on server shutdown
+    // Call this on server shutdown
     void deregisterServer();
-
-    // Must be called from the game loop on the server
     void updateServer(float deltaTime);
 
     //Client-side API
 
-    // Start background polling — safe to call once from menu init
+    // Start background refresh of the server list
     void startRefreshing();
-
-    // Stop background polling
     void stopRefreshing();
 
     // Thread-safe snapshot of the latest server list
     std::vector<ServerEntry> getServers() const;
 
-    // True if a fetch is currently in progress
     bool isFetching() const { return m_fetching.load(); }
-
-    // True if the last fetch succeeded
     bool isAvailable() const { return m_available.load(); }
 
 private:
-    // Executes a curl command and returns stdout as a string.
-    // Runs synchronously — always call from a background thread.
-    static std::string curlPost(const std::string& url,
-        const std::string& jsonBody);
+    static std::string curlPost(const std::string& url, const std::string& jsonBody);
     static std::string curlGet(const std::string& url);
 
     // Parses the /servers JSON response into a vector of ServerEntry
     static std::vector<ServerEntry> parseServerList(const std::string& json);
 
-    void fetchLoop();   // background thread for client refresh
+    void fetchLoop();  
 
     // Server registration state
     std::string m_serverIp;

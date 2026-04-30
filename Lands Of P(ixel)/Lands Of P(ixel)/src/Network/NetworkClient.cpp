@@ -419,11 +419,6 @@ void NetworkClient::handleSyncPlayers(Network::PacketReader& reader)
         reader.readUInt8(weaponType);
         reader.readBool(isAttacking);
         reader.readFloat(weaponRotation);
-        float velocityX = 0.f, velocityY = 0.f;
-        std::uint8_t character = 0;
-        reader.readFloat(velocityX);
-        reader.readFloat(velocityY);
-        reader.readUInt8(character);
 
         // Skip our own player after reading the data
         if (playerId == m_playerId)

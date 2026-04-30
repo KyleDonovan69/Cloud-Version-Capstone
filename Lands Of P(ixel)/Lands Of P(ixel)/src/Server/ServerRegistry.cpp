@@ -14,13 +14,22 @@ namespace
     {
         const std::string search = "\"" + key + "\"";
         auto pos = json.find(search);
-        if (pos == std::string::npos) return "";
+        if (pos == std::string::npos)
+        {
+            return "";
+        }
         pos += search.size();
         pos = json.find('"', pos);  // find opening quote of value
-        if (pos == std::string::npos) return "";
+        if (pos == std::string::npos)
+        {
+            return "";
+        }
         pos++;
         auto end = json.find('"', pos);
-        if (end == std::string::npos) return "";
+        if (end == std::string::npos)
+        {
+            return "";
+        }
         return json.substr(pos, end - pos);
     }
 
@@ -28,10 +37,16 @@ namespace
     {
         const std::string search = "\"" + key + "\"";
         auto pos = json.find(search);
-        if (pos == std::string::npos) return def;
+        if (pos == std::string::npos)
+        {
+            return def;
+        }
         pos += search.size();
         pos = json.find_first_of("0123456789", pos);
-        if (pos == std::string::npos) return def;
+        if (pos == std::string::npos)
+        {
+            return def;
+        }
         try { return std::stoi(json.substr(pos)); }
         catch (...) { return def; }
     }
@@ -45,11 +60,18 @@ namespace
 #else
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 #endif
-        if (!pipe) return "";
+        if (!pipe)
+        {
+            return "";
+        }
         while (fgets(buf.data(), static_cast<int>(buf.size()), pipe.get()) != nullptr)
+        {
             result += buf.data();
+        }
         while (!result.empty() && (result.back() == '\n' || result.back() == '\r' || result.back() == ' '))
+        {
             result.pop_back();
+        }
         return result;
     }
 }
@@ -73,18 +95,20 @@ std::string ServerRegistry::curlPost(const std::string& url,
     escaped.reserve(jsonBody.size() + 16);
     for (char c : jsonBody)
     {
-        if (c == '"')  escaped += "\\\"";
-        else           escaped += c;
+        if (c == '"')
+        {
+            escaped += "\\\"";
+        }
+        else
+        {
+            escaped += c;
+        }
     }
 
 #ifdef _WIN32
-    std::string cmd = "curl -s -X POST \"" + url + "\" "
-        "-H \"Content-Type: application/json\" "
-        "-d \"" + escaped + "\" 2>nul";
+    std::string cmd = "curl -s -X POST \"" + url + "\" " "-H \"Content-Type: application/json\" " "-d \"" + escaped + "\" 2>nul";
 #else
-    std::string cmd = "curl -s -X POST \"" + url + "\" "
-        "-H \"Content-Type: application/json\" "
-        "-d \"" + escaped + "\" 2>/dev/null";
+    std::string cmd = "curl -s -X POST \"" + url + "\" " "-H \"Content-Type: application/json\" " "-d \"" + escaped + "\" 2>/dev/null";
 #endif
     return runCommand(cmd);
 }
@@ -105,18 +129,17 @@ void ServerRegistry::registerServer(std::uint16_t port, int maxPlayers)
     m_serverPort = port;
     m_maxPlayers = maxPlayers;
 
-    // Discover public IP using AWS EC2 metadata service (works on EC2), Falls back to ipify if not on EC2
-    m_serverIp = runCommand(
-        "curl -s --max-time 2 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null");
+    // Discover public IP using AWS EC2 metadata service (this works on EC2)
+    m_serverIp = runCommand("curl -s --max-time 2 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null");
 
     if (m_serverIp.empty() || m_serverIp.find("<!") != std::string::npos)
     {
-        m_serverIp = runCommand("curl -s --max-time 5 https://api.ipify.org 2>/dev/null");
+        m_serverIp = runCommand("curl -s --max-time 5 https://api.ipify.org 2>/dev/null");//fallback to ipify if EC2 not found
     }
 
     if (m_serverIp.empty())
     {
-        std::cerr << "[Registry] Could not determine public IP — registration skipped\n";
+        std::cerr << "[Registry] Could not determine public IP, registration skipped\n";
         return;
     }
 
@@ -135,8 +158,7 @@ void ServerRegistry::registerServer(std::uint16_t port, int maxPlayers)
         + "}";
 
     std::string resp = curlPost(std::string(API_BASE) + "/register", body);
-    std::cout << "[Registry] Registered " << m_serverIp << ":" << port
-        << "  response: " << resp << "\n";
+    std::cout << "[Registry] Registered " << m_serverIp << ":" << port << "  response: " << resp << "\n";
 
     m_registered = true;
     m_heartbeatTimer = 0.0f;
@@ -145,7 +167,10 @@ void ServerRegistry::registerServer(std::uint16_t port, int maxPlayers)
 // Server-side: heartbeat
 void ServerRegistry::updateHeartbeat(int playerCount, const std::string& gameState)
 {
-    if (!m_registered) return;
+    if (!m_registered)
+    {
+        return;
+    }
 
     std::string body =
         "{\"ip\":\"" + m_serverIp + "\""
@@ -156,7 +181,7 @@ void ServerRegistry::updateHeartbeat(int playerCount, const std::string& gameSta
 
     // Fire and forget, run in detached thread so game loop isn't blocked
     std::thread([b = std::move(body)]()
-        {
+        { 
             curlPost(std::string(API_BASE) + "/heartbeat", b);
         }).detach();
 }
@@ -164,7 +189,10 @@ void ServerRegistry::updateHeartbeat(int playerCount, const std::string& gameSta
 // Server-side: deregister
 void ServerRegistry::deregisterServer()
 {
-    if (!m_registered) return;
+    if (!m_registered)
+    {
+        return;
+    }
 
     std::string body =
         "{\"ip\":\"" + m_serverIp + "\""
@@ -178,7 +206,10 @@ void ServerRegistry::deregisterServer()
 // Server-side: update (call from game loop)
 void ServerRegistry::updateServer(float deltaTime)
 {
-    if (!m_registered) return;
+    if (!m_registered)
+    {
+        return;
+    }
     m_heartbeatTimer += deltaTime;
     if (m_heartbeatTimer >= HEARTBEAT_INTERVAL)
     {
@@ -190,7 +221,10 @@ void ServerRegistry::updateServer(float deltaTime)
 // Client-side: start/stop refresh loop
 void ServerRegistry::startRefreshing()
 {
-    if (m_refreshThread.joinable()) return;  // already running
+    if (m_refreshThread.joinable())
+    {
+        return;  // already running
+    }
     m_stopRefresh = false;
     m_refreshThread = std::thread(&ServerRegistry::fetchLoop, this);
 }
@@ -199,7 +233,9 @@ void ServerRegistry::stopRefreshing()
 {
     m_stopRefresh = true;
     if (m_refreshThread.joinable())
+    {
         m_refreshThread.join();
+    }
 }
 
 void ServerRegistry::fetchLoop()
@@ -224,7 +260,9 @@ void ServerRegistry::fetchLoop()
 
         // Sleep in small increments so we can wake up quickly on stop
         for (int i = 0; i < static_cast<int>(REFRESH_INTERVAL * 10) && !m_stopRefresh; ++i)
+        {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
     }
 }
 
@@ -242,9 +280,15 @@ std::vector<ServerEntry> ServerRegistry::parseServerList(const std::string& json
 
     // Find the servers array
     auto arrStart = json.find("\"servers\"");
-    if (arrStart == std::string::npos) return result;
+    if (arrStart == std::string::npos)
+    {
+        return result;
+    }
     arrStart = json.find('[', arrStart);
-    if (arrStart == std::string::npos) return result;
+    if (arrStart == std::string::npos)
+    {
+        return result;
+    }
     arrStart += 1;  // skip past [
 
     // Walk through each object
@@ -252,10 +296,16 @@ std::vector<ServerEntry> ServerRegistry::parseServerList(const std::string& json
     while (pos < json.size())
     {
         auto objStart = json.find('{', pos);
-        if (objStart == std::string::npos) break;
+        if (objStart == std::string::npos)
+        {
+            break;
+        }
 
         auto objEnd = json.find('}', objStart);
-        if (objEnd == std::string::npos) break;
+        if (objEnd == std::string::npos)
+        {
+            break;
+        }
 
         std::string obj = json.substr(objStart, objEnd - objStart + 1);
 
@@ -268,7 +318,9 @@ std::vector<ServerEntry> ServerRegistry::parseServerList(const std::string& json
         entry.gameState = jsonString(obj, "gameState");
 
         if (!entry.ip.empty())
+        {
             result.push_back(entry);
+        }
 
         pos = objEnd + 1;
     }
